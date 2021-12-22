@@ -11,5 +11,5 @@
     "esModuleInterop": true,
     "lib": ["esnext", "dom"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "src/mainLayout.vue", "src/layouts/MainLayout.vue", "src/MainLayout.vue", "src/components/EditorComponent.vue", "src/pages/NotFound.vue", "src/pages/Editor.vue", "src/pages/Dashboard.vue", "src/pages/Auth.vue"]
 }

@@ -1,7 +1,5 @@
 module.exports = {
-  mode: "jit",
-  purge: ["./**/*.html", "./**/*.vue", "./**/*.ts"],
-  darkMode: false, // or 'media' or 'class'
+  content: ["./src/**/*.vue", "./src/**/*.ts", "./public/**/*.html"],
   theme: {
     extend: {
       container: {
@@ -16,9 +14,6 @@ module.exports = {
         },
       },
     },
-  },
-  variants: {
-    extend: {},
   },
   plugins: [],
 };

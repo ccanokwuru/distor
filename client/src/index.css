@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  html {
+    @apply bg-gray-100;
+  }
+  .editor-wrapper {
+    @apply pt-[200px] md:pt-[150px] lg:pt-[100px] h-screen overflow-auto w-full;
+  }
+
+  .ql-container {
+    @apply !border-none w-[100vw]  pb-5 min-h-[60%];
+    /* min-height: calc(100vh - 120px) !important; */
+  }
+
+  .ql-editor {
+    @apply md:!max-w-[210mm] w-full mx-auto mt-5 bg-white !shadow-lg !rounded-sm !p-5 md:!p-20 min-h-[297mm];
+  }
+
+  .ql-toolbar {
+    @apply !fixed !w-full bg-white z-50 !border-none shadow-md justify-center flex top-[62px];
+  }
+
+  .btn {
+    @apply py-2
+            px-3
+            md:py-3 md:px-5
+            md:font-semibold
+            rounded-lg;
+  }
+  .doc-list {
+    @apply container mt-5;
+    height: calc(100vh - 200px);
+  }
+}
