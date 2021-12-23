@@ -1,11 +1,8 @@
 "use strict";
 
-const setupWSConnection = require("y-websocket/bin/utils.js").setupWSConnection;
+// @ts-ignore
 
 module.exports = async (fastify, opts) => {
-  // @ts-ignore
-  fastify.register(require("fastify-websocket"));
-
   fastify.get("/", async (request, reply) => {
     return { all: true };
   });
@@ -25,7 +22,20 @@ module.exports = async (fastify, opts) => {
     return { share: true };
   });
 
-  fastify.get("/share/:docId", { websocket: true }, async (conn, req) => {
-    conn.socket.on("connection", setupWSConnection);
+  // @ts-ignore
+  fastify.register(require("fastify-socket.io"), {
+    cors: {
+      origin: "*",
+      methods: ["GET", "POST"],
+    },
+  });
+
+  fastify.get("/share/:docId", async (request, reply) => {
+    fastify.io.on("connection", (socket) => {
+      fastify.io.on("send-change", (delta) => {
+        fastify.io.broadcast("recieve-change", delta);
+      });
+      console.info("socket connected", socket.id);
+    });
   });
 };

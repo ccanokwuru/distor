@@ -2,15 +2,20 @@
   <section ref="editor" class="min-h-20"></section>
 </template>
 <script script lang="ts">
-import { computed, defineComponent, onMounted, ref } from "vue";
+import { computed, defineComponent, onMounted, onUnmounted, ref } from "vue";
+
+import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
+import { QuillBinding } from "y-quill";
 
 // Quill for doc;
 import "quill/dist/quill.core.css";
 import "quill/dist/quill.snow.css";
 import "quill/dist/quill.bubble.css";
-import Quill, { QuillOptionsStatic } from "quill";
+import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { useRoute } from "vue-router";
+import { IndexeddbPersistence } from "y-indexeddb";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -63,52 +68,75 @@ const options = {
 export default defineComponent({
   setup() {
     const editor = ref(null);
-
     const router = useRoute();
-
     const docId = router.params.id;
+
+    const ydoc = new Y.Doc();
+    const localSave = new IndexeddbPersistence(docId, ydoc);
+    const provider = new WebsocketProvider(
+      "ws://127.0.0.1:5000/docs/share",
+      docId,
+      ydoc
+    );
+
+    const saveDoc = async (val) => {
+      if (editor.value) {
+        // await fetch()
+      }
+    };
+
+    const insertContet = () => {
+      if (quill.value) {
+        const content = quill.value.setText();
+      }
+    };
 
     const init = () => {
       if (editor.value) {
         const wrapper = document.createElement("div");
 
         editor.value.appendChild(wrapper);
-        const quill = new Quill(wrapper, options);
+        const quill = new Quill(wrapper, {
+          ...options,
+          scrollingContainer: "#editor-scroll",
+        });
         return quill;
       }
     };
 
-    onMounted(() => {
-      const editor = init();
+    const getColor = () => {
+      return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    };
 
-      const ws = new window.WebSocket("ws://localhost:5000");
-      editor.on("text-change", (n, o) => {
-        console.log({ new: n, old: o });
-      });
-      editor.on("selection-change", (n, o) => {
-        console.log({ new: n, old: o });
-      });
+    const getUser = () => {
+      const users = ["Tim", "John", "Chisom", "Christian"];
+      const randomUser = Math.floor(Math.random() * users.length);
+      return users[randomUser];
+    };
+
+    const userInfo = {
+      name: getUser(),
+      color: getColor(),
+    };
+
+    onMounted(() => {
+      const ytext = ydoc.getText("quill");
+      const quill = init();
+
+      const binding = new QuillBinding(ytext, quill, provider.awareness);
+
+      provider.connect();
+
+      provider.awareness.setLocalStateField("user", userInfo);
+      setInterval(() => {
+        if (quill) saveDoc(quill.getText);
+      }, 2500);
+    });
+
+    onUnmounted(() => {
+      provider.disconnect();
     });
     return { editor };
   },
 });
 </script>
-
-<style scoped>
-/* .editor-wrapper {
-  @apply mt-[60px] fixed w-[100vw];
-  height: calc(100vh - 100px);
-}
-
-.ql-container {
-  @apply !border-none !object-fill !overflow-y-auto;
-}
-
-.ql-editor {
-  @apply !max-w-[210mm] mx-auto my-5 bg-white !shadow-lg !rounded-sm !p-20;
-}
-
-.ql-toolbar {
-  @apply !sticky !w-full bg-white z-50 !border-none shadow-md justify-center flex;
-} */
-</style>

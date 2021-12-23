@@ -1,5 +1,5 @@
 <template>
-  <section class="editor-wrapper">
+  <section class="editor-wrapper" id="editor-scroll">
     <editor-component />
   </section>
 </template>
