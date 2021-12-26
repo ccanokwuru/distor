@@ -4,6 +4,10 @@
 <script script lang="ts">
 import { computed, defineComponent, onMounted, onUnmounted, ref } from "vue";
 
+// import * as Y from "yjs";
+// import { WebsocketProvider } from "y-websocket";
+// import { QuillBinding } from "y-quill";
+
 // Quill for doc;
 import "quill/dist/quill.core.css";
 import "quill/dist/quill.snow.css";
@@ -11,6 +15,7 @@ import "quill/dist/quill.bubble.css";
 import Quill from "quill";
 import QuillCursors from "quill-cursors";
 import { useRoute } from "vue-router";
+// import { IndexeddbPersistence } from "y-indexeddb";
 
 Quill.register("modules/cursors", QuillCursors);
 
@@ -49,9 +54,7 @@ const options = {
   // boundary: document.body,
   modules: {
     // syntax: true,
-    cursors: {
-      transformOnTextChange: true,
-    },
+    cursors: true,
     toolbar: toolbarOpts,
     history: {
       // Local undo shouldn't undo changes
@@ -67,31 +70,27 @@ export default defineComponent({
     const editor = ref(null);
     const router = useRoute();
     const docId = router.params.id;
-    const wsConn = () => {
-      // const ws = new WebSocket(`ws://192.168.43.62:5000/docs/share/${docId}`);
-      const ws = new WebSocket(`ws://192.168.8.103:5000/docs/share/${docId}`);
-      // const ws = new WebSocket(`ws://127.0.0.1:5000/docs/share/${docId}`);
-      // ws.binaryType = "arraybuffer";
 
-      ws.onopen = () => {
-        console.log("connected to server you can collaborate");
-      };
+    // const ydoc = new Y.Doc();
+    // // const localSave = new IndexeddbPersistence(docId, ydoc);
+    // const provider = new WebsocketProvider(
+    //   // "ws://192.168.43.62:5000/docs/share",
+    //   "ws://127.0.0.1:5000/docs/share",
+    //   docId,
+    //   ydoc
+    // );
 
-      ws.onclose = () => {
-        console.log("you are offline!! reconnecting to server");
-        setTimeout(() => {
-          wsConn();
-        }, 1000);
-      };
-
-      return ws;
+    const saveDoc = async (val) => {
+      if (editor.value) {
+        const content = quill.value.getText();
+        // await fetch()
+      }
     };
 
-    const ws = wsConn();
-
-    const saveDoc = async (val: string) => {
-      const content = val;
-      // await fetch()
+    const insertContet = () => {
+      if (quill.value) {
+        const content = quill.value.setText();
+      }
     };
 
     const init = () => {
@@ -103,11 +102,6 @@ export default defineComponent({
           ...options,
           scrollingContainer: "#editor-scroll",
         });
-
-        const cursors = quill?.getModule("cursors");
-        cursors.createCursor(getId(), getUser(), getColor());
-
-        console.log(cursors.cursors());
         return quill;
       }
     };
@@ -116,38 +110,45 @@ export default defineComponent({
       return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
     };
 
-    const getId = () => Math.floor(Math.random() * 999999).toString(16);
-
     const getUser = () => {
       const users = ["Tim", "John", "Chisom", "Christian"];
       const randomUser = Math.floor(Math.random() * users.length);
       return users[randomUser];
     };
 
-    const upChange = (n) => {
-      ws.send(JSON.stringify(n));
+    const userInfo = {
+      name: getUser(),
+      color: getColor(),
     };
 
     onMounted(() => {
+      // const ytext = ydoc.getText("quill");
       const quill = init();
-      quill?.on("text-change", (n, o, s) => {
-        if (s !== "user") return;
-        upChange(n);
+
+      // const binding = new QuillBinding(ytext, quill, provider.awareness);
+
+      // provider.connect();
+
+      // provider.awareness.setLocalStateField("user", userInfo);
+
+      quill?.on("text-change", (delta, oldDelta, source) => {
+        if (source === "user") {
+          broadcastUpdate(delta);
+        }
       });
 
-      ws.onmessage = async (e) => {
-        const { data } = e;
-        const raw = await data.text();
-        quill?.updateContents(JSON.parse(raw));
-      };
+      quill?.on("text-change", (delta, oldDelta, source) => {
+        if (source === "user") {
+        }
+      });
 
       setInterval(() => {
-        if (quill) saveDoc(quill.getText());
-      }, 2000);
+        if (quill) saveDoc(quill.getText);
+      }, 2500);
     });
 
     onUnmounted(() => {
-      ws.close();
+      provider.disconnect();
     });
     return { editor };
   },
@@ -155,13 +156,13 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* .editor-wrapper {
+.editor-wrapper {
   @apply pt-[150px] md:pt-[120px] lg:pt-[100px] fixed h-screen overflow-y-auto w-full pb-5;
 }
 
 .ql-container {
   @apply !border-none w-screen mb-5 pb-4;
-  min-height: calc(100vh - 120px) !important; 
+  /* min-height: calc(100vh - 120px) !important; */
 }
 
 .ql-editor {
@@ -170,5 +171,5 @@ export default defineComponent({
 
 .ql-toolbar {
   @apply !fixed !w-full bg-white z-50 !border-none shadow-md justify-center flex top-[62px];
-} */
+}
 </style>
