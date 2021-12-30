@@ -67,10 +67,12 @@ export default defineComponent({
     const editor = ref(null);
     const router = useRoute();
     const docId = router.params.id;
+    const cursor = ref(null);
+
     const wsConn = () => {
       // const ws = new WebSocket(`ws://192.168.43.62:5000/docs/share/${docId}`);
-      const ws = new WebSocket(`ws://192.168.8.103:5000/docs/share/${docId}`);
-      // const ws = new WebSocket(`ws://127.0.0.1:5000/docs/share/${docId}`);
+      // const ws = new WebSocket(`ws://192.168.8.103:5000/docs/share/${docId}`);
+      const ws = new WebSocket(`ws://127.0.0.1:5000/docs/share/${docId}`);
       // ws.binaryType = "arraybuffer";
 
       ws.onopen = () => {
@@ -105,9 +107,8 @@ export default defineComponent({
         });
 
         const cursors = quill?.getModule("cursors");
-        cursors.createCursor(getId(), getUser(), getColor());
+        cursor.value = cursors.createCursor(getId(), getUser(), getColor());
 
-        console.log(cursors.cursors());
         return quill;
       }
     };
@@ -124,12 +125,14 @@ export default defineComponent({
       return users[randomUser];
     };
 
-    const upChange = (n) => {
+    const upChange = (n): any => {
       ws.send(JSON.stringify(n));
     };
 
     onMounted(() => {
       const quill = init();
+      const cursors = quill?.getModule("cursors");
+
       quill?.on("text-change", (n, o, s) => {
         if (s !== "user") return;
         upChange(n);
@@ -137,12 +140,17 @@ export default defineComponent({
 
       ws.onmessage = async (e) => {
         const { data } = e;
-        const raw = await data.text();
-        quill?.updateContents(JSON.parse(raw));
+
+        const jsonData = await data.text();
+
+        const raw = JSON.parse(jsonData);
+        quill?.updateContents(raw);
       };
 
       setInterval(() => {
-        if (quill) saveDoc(quill.getText());
+        if (!quill) return;
+        saveDoc(quill.getText());
+        cursors.update();
       }, 2000);
     });
 
