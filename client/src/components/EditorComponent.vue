@@ -2,17 +2,23 @@
   <section ref="editor" class="min-h-20"></section>
 </template>
 <script script lang="ts">
-import { computed, defineComponent, onMounted, onUnmounted, ref } from "vue";
+import {
+  computed,
+  defineComponent,
+  onBeforeMount,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 
 // Quill for doc;
 import "quill/dist/quill.core.css";
 import "quill/dist/quill.snow.css";
 import "quill/dist/quill.bubble.css";
 import Quill from "quill";
-import QuillCursors from "quill-cursors";
 import { useRoute } from "vue-router";
-
-Quill.register("modules/cursors", QuillCursors);
+import { APISettings } from "../api";
 
 const toolbarOpts = [
   [
@@ -49,9 +55,6 @@ const options = {
   // boundary: document.body,
   modules: {
     // syntax: true,
-    cursors: {
-      transformOnTextChange: true,
-    },
     toolbar: toolbarOpts,
     history: {
       // Local undo shouldn't undo changes
@@ -67,13 +70,28 @@ export default defineComponent({
     const editor = ref(null);
     const router = useRoute();
     const docId = router.params.id;
-    const cursor = ref(null);
+    const content = ref(null);
+
+    const getData = async () => {
+      const result = await fetch(
+        `http://${APISettings.baseURL}/docs/s/${docId}`,
+        {
+          method: "GET",
+          headers: APISettings.headers,
+        }
+      );
+
+      if (result.status !== 200) return;
+
+      const json = await result.json();
+
+      content.value = json.content;
+    };
 
     const wsConn = () => {
-      // const ws = new WebSocket(`ws://192.168.43.62:5000/docs/share/${docId}`);
-      // const ws = new WebSocket(`ws://192.168.8.103:5000/docs/share/${docId}`);
-      const ws = new WebSocket(`ws://127.0.0.1:5000/docs/share/${docId}`);
-      // ws.binaryType = "arraybuffer";
+      const ws = new WebSocket(
+        `ws://${APISettings.baseURL}/docs/share/${docId}`
+      );
 
       ws.onopen = () => {
         console.log("connected to server you can collaborate");
@@ -89,94 +107,61 @@ export default defineComponent({
       return ws;
     };
 
-    const ws = wsConn();
-
-    const saveDoc = async (val: string) => {
-      const content = val;
-      // await fetch()
+    const saveDoc = () => {
+      const result = fetch(
+        `http://${APISettings.baseURL}/docs/update/${docId}`,
+        {
+          method: "POST",
+          headers: APISettings.headers,
+          body: JSON.stringify({ content: content.value }),
+        }
+      );
     };
 
     const init = () => {
       if (editor.value) {
         const wrapper = document.createElement("div");
 
+        // @ts-ignore
         editor.value.appendChild(wrapper);
         const quill = new Quill(wrapper, {
           ...options,
           scrollingContainer: "#editor-scroll",
         });
 
-        const cursors = quill?.getModule("cursors");
-        cursor.value = cursors.createCursor(getId(), getUser(), getColor());
+        if (content.value) quill.setContents(JSON.parse(content.value));
 
         return quill;
       }
     };
 
-    const getColor = () => {
-      return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
-    };
-
-    const getId = () => Math.floor(Math.random() * 999999).toString(16);
-
-    const getUser = () => {
-      const users = ["Tim", "John", "Chisom", "Christian"];
-      const randomUser = Math.floor(Math.random() * users.length);
-      return users[randomUser];
-    };
-
-    const upChange = (n): any => {
-      ws.send(JSON.stringify(n));
-    };
-
-    onMounted(() => {
+    onMounted(async () => {
+      await getData();
       const quill = init();
-      const cursors = quill?.getModule("cursors");
+      const ws = wsConn();
 
       quill?.on("text-change", (n, o, s) => {
+        content.value = JSON.stringify(quill?.getContents());
         if (s !== "user") return;
-        upChange(n);
+        ws.send(JSON.stringify({ type: "update", data: JSON.stringify(n) }));
       });
 
-      ws.onmessage = async (e) => {
-        const { data } = e;
-
-        const jsonData = await data.text();
-
-        const raw = JSON.parse(jsonData);
-        quill?.updateContents(raw);
-      };
+      // ws.onmessage = async (e) => {
+      //   const { data } = e;
+      //   const raw = JSON.parse(data);
+      //   quill?.updateContents(raw);
+      // };
 
       setInterval(() => {
-        if (!quill) return;
-        saveDoc(quill.getText());
-        cursors.update();
-      }, 2000);
+        saveDoc();
+      }, 20000);
     });
 
-    onUnmounted(() => {
-      ws.close();
+    onBeforeUnmount(() => {
+      saveDoc();
     });
+
     return { editor };
   },
 });
 </script>
-
-<style scoped>
-/* .editor-wrapper {
-  @apply pt-[150px] md:pt-[120px] lg:pt-[100px] fixed h-screen overflow-y-auto w-full pb-5;
-}
-
-.ql-container {
-  @apply !border-none w-screen mb-5 pb-4;
-  min-height: calc(100vh - 120px) !important; 
-}
-
-.ql-editor {
-  @apply md:!max-w-[210mm] w-full mx-auto mt-5 bg-white !shadow-lg !rounded-sm !p-10 md:!p-20 !min-h-[80vh];
-}
-
-.ql-toolbar {
-  @apply !fixed !w-full bg-white z-50 !border-none shadow-md justify-center flex top-[62px];
-} */
-</style>

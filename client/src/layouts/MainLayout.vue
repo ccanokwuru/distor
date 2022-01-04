@@ -55,12 +55,13 @@
             ></sl-icon-button>
             <!-- <sl-button  caret>AC</sl-button> -->
             <sl-menu>
-              <sl-menu-item checked>Checked</sl-menu-item>
-              <sl-menu-item disabled>Disabled</sl-menu-item>
-              <sl-divider></sl-divider>
-              <sl-menu-item @click="router.push({ name: 'auth' })">
-                Logout
+              <sl-menu-item
+                @click="router.push({ name: 'auth' })"
+                v-if="!user?.email"
+              >
+                Login
               </sl-menu-item>
+              <sl-menu-item @click="logout()" v-else> Logout </sl-menu-item>
             </sl-menu>
           </sl-dropdown>
         </div>
@@ -80,17 +81,44 @@
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, ref } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+import { useStore } from "vuex";
+import { APISettings } from "../api";
 
 export default defineComponent({
   setup() {
     const searchText = ref("");
+    const msg = ref(null);
     const router = useRouter();
+    const store = useStore();
     const notFound = computed(
       () => router.currentRoute.value.name === "NotFound"
     );
     const editor = computed(() => router.currentRoute.value.name === "doc");
+
+    const user = computed(() => store.dispatch("getUser"));
+
+    const logout = async () => {
+      const response = await fetch(
+        `http://${APISettings.baseURL}/user/logout`,
+        {
+          method: "POST",
+          headers: APISettings.headers,
+          body: JSON.stringify(user.value),
+        }
+      );
+      const json = await response.json();
+
+      msg.value = json.msg;
+      if (response.status !== 200) return;
+
+      // @ts-ignore
+      store.commit("setUser", { email: null, name: null });
+      localStorage.removeItem("user");
+
+      router.push("/");
+    };
 
     const search = () => {
       console.log(searchText.value);
@@ -101,7 +129,9 @@ export default defineComponent({
       editor,
       router,
       searchText,
+      logout,
       search,
+      user,
     };
   },
 });
