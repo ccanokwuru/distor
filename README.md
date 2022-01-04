@@ -21,6 +21,9 @@ the client is runnig now on PORT:3000
 first
 > cd server
 
+install dependencies
+> npm i
+
 then
 > npm run dev
 
