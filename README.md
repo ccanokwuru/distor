@@ -21,14 +21,8 @@ the client is runnig now on PORT:3000
 first
 > cd server
 
-### fixing the websocket bug
-Remove "exports" section (the part that was added here) of node_modules/y-websocket/package.json and then running 
-> npx patch-package --exclude 'nothing' y-websocket  
-
-Make sure 
-> --exclude 'nothing' 
-
-is included to include package.json changes in patch.
+install dependencies
+> npm i
 
 then
 > npm run dev
