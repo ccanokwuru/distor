@@ -88,8 +88,8 @@ export default defineComponent({
     const editor = computed(() => router.currentRoute.value.name === "doc");
 
     const user = computed(() => {
-      store.dispatch("getUser")
-      return store.state.user
+      store.dispatch("getUser");
+      return store.state.user;
     });
 
     const logout = async () => {
@@ -116,7 +116,6 @@ export default defineComponent({
     const search = () => {
       console.log(searchText.value);
     };
-    console.log({user:user})
 
     return {
       notFound,

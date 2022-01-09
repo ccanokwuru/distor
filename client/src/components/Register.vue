@@ -39,7 +39,10 @@ export default defineComponent({
       // @ts-ignore
       msg.value = "successful";
       const user = await result.json();
-      store.commit("setUser", user.user);
+
+      localStorage.setItem("user", JSON.stringify(user.user));
+
+      store.dispatch("getUser");
 
       router.push("/");
     };

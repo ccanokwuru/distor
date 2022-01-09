@@ -8,30 +8,10 @@ export default defineComponent({
   setup() {
     const store = useStore();
 
-    const user = computed(() => store.state.user);
-    // store.state.user.commit("setUser", user.user);
-
     const router = useRouter();
-    const documents = ref(null);
-    // @ts-ignore
-    const email = user.value.email;
-    const getDocuments = async () => {
-      const response = await fetch(
-        `http://${APISettings.baseURL}/docs/user/?email=${email}`,
-        {
-          method: "GET",
-          headers: APISettings.headers,
-        }
-      );
-
-      if (response.status !== 200) return;
-
-      // @ts-ignore
-      documents.value = await response.json();
-    };
-
-    onMounted(() => {
-      getDocuments();
+    const documents = computed(() => {
+      store.dispatch("getDocs");
+      return store.state.docs;
     });
 
     return {

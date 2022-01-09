@@ -41,29 +41,51 @@ import { setBasePath } from "@shoelace-style/shoelace/dist/utilities/base-path";
 
 import App from "./App.vue";
 import routes from "./routes";
+import { APISettings } from "./api";
 
 const store = createStore({
   state(): object {
     return {
-      user: { email: null, name: null },
+      user: null,
+      docs: null,
     };
   },
   mutations: {
-    setUser(state: object, { email, name }) {
+    setUser(state: object, info) {
       // @ts-ignore
-      state.user.email = email;
+      state.user = info;
+    },
+    setDocs(state: object, info) {
       // @ts-ignore
-      state.user.name = name;
-      const user = JSON.stringify({ email: email, name: name });
-      localStorage.setItem("user", user);
+      state.docs = info;
     },
   },
   actions: {
     getUser() {
       const user = localStorage.getItem("user");
-
       if (!user) return;
-      this.commit("setUser", JSON.parse(user));
+      return this.commit("setUser", JSON.parse(user));
+    },
+    getDocs() {
+      //@ts-ignore
+      const email = this.state.user?.email;
+      (async () => {
+        let docs;
+        const response = await fetch(
+          `http://${APISettings.baseURL}/docs/user/?email=${email}`,
+          {
+            method: "GET",
+            headers: APISettings.headers,
+          }
+        );
+
+        if (response.status !== 200) return;
+        // @ts-ignore
+        else docs = await response.json();
+        if (!docs) return;
+        console.log({ docs: docs });
+        return this.commit("setDocs", docs);
+      })();
     },
   },
 });
