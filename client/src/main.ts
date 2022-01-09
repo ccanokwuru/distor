@@ -61,6 +61,7 @@ const store = createStore({
   actions: {
     getUser() {
       const user = localStorage.getItem("user");
+
       if (!user) return;
       this.commit("setUser", JSON.parse(user));
     },

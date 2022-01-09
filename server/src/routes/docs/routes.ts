@@ -66,7 +66,7 @@ const docRoute: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     "/create",
     async function (request, reply) {
       const { title, email } = request.body;
-      const slug = `${crypto.randomBytes(12).toString("base64")}${Math.floor(
+      const slug = `${crypto.randomBytes(12).toString("hex")}${Math.floor(
         Math.random() * 145555
       ).toString(16)}`;
 

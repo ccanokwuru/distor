@@ -6,17 +6,7 @@
       :class="'bg-white fixed top-0 z-50 w-full' + (editor ? '' : ' shadow-md')"
     >
       <nav
-        class="
-          mx-auto
-          px-5
-          max-w-screen-lg
-          flex
-          py-3
-          content-center
-          justify-between
-          gap-5
-          md:gap-10
-        "
+        class="mx-auto px-5 max-w-screen-lg flex py-3 content-center justify-between gap-5 md:gap-10"
       >
         <!-- logo -->
         <h1 class="col text-lg font-bold self-center hover:text-sky-600">
@@ -97,7 +87,10 @@ export default defineComponent({
     );
     const editor = computed(() => router.currentRoute.value.name === "doc");
 
-    const user = computed(() => store.dispatch("getUser"));
+    const user = computed(() => {
+      store.dispatch("getUser")
+      return store.state.user
+    });
 
     const logout = async () => {
       const response = await fetch(
@@ -123,6 +116,7 @@ export default defineComponent({
     const search = () => {
       console.log(searchText.value);
     };
+    console.log({user:user})
 
     return {
       notFound,

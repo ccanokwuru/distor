@@ -165,3 +165,23 @@ export default defineComponent({
   },
 });
 </script>
+
+<style>
+.editor-wrapper {
+    @apply !pt-[150px] md:!pt-[120px] lg:!pt-[100px] !fixed !h-screen !overflow-y-auto !w-full !pb-5;
+  }
+
+  .ql-container {
+    @apply !border-none !w-screen !mb-5 !pb-4;
+    /* min-height: calc(100vh - 120px) !important; */
+  }
+
+  .ql-editor {
+    @apply md:!max-w-[210mm] w-full mx-auto mt-5 !bg-white !shadow-lg !rounded-sm !p-10 md:!p-20 !min-h-[80vh];
+  }
+
+  .ql-toolbar {
+    @apply !fixed !w-full !bg-white z-50 !border-none !shadow-md !justify-center !flex !top-[62px];
+  }
+
+</style>
